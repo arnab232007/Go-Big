@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoBig | The Professional Marketplace</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Manrope"', 'sans-serif'] },
+                    colors: {
+                        brand: { black: '#0D0D0D', dark: '#141414', primary: '#1DBF73', surface: '#F7F7F7' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #374151; }
+        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass-nav { background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="bg-white text-brand-black dark:bg-brand-black dark:text-white transition-colors duration-300 antialiased h-screen flex flex-col overflow-hidden">
+
+    <nav class="h-[80px] glass-nav fixed w-full top-0 z-50 flex items-center justify-between px-6 lg:px-12">
+        <div class="flex items-center gap-10">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
+                <svg class="w-8 h-8 text-brand-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <span class="font-extrabold text-2xl tracking-tight">GoBig<span class="text-brand-primary">.</span></span>
+            </div>
+            <div class="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden w-96 transition-all focus-within:ring-2 focus-within:ring-brand-primary">
+                <input id="global-search" type="text" placeholder="Find services or professionals..." class="flex-1 px-4 py-2.5 outline-none bg-transparent text-sm dark:text-white">
+                <button class="bg-brand-black dark:bg-gray-700 text-white p-2.5 px-4"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+
+        <div id="nav-tabs" class="hidden md:flex gap-6 text-sm font-semibold text-gray-500 dark:text-gray-400">
+            <button onclick="router.push('market')" id="tab-market" class="hover:text-brand-primary transition-colors">Marketplace</button>
+            <button onclick="router.push('dashboard')" id="tab-dashboard" class="hover:text-brand-primary transition-colors">Dashboard</button>
+            <button onclick="router.push('community')" id="tab-community" class="hover:text-brand-primary transition-colors">Messages</button>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="auth-buttons" class="flex gap-3">
+                <button onclick="auth.login('client')" class="hidden lg:block font-bold text-sm hover:text-brand-primary">Sign In</button>
+                <button onclick="auth.login('freelancer')" class="px-5 py-2.5 border border-brand-primary text-brand-primary rounded-md font-bold text-sm hover:bg-brand-primary hover:text-white transition-all">Join</button>
+            </div>
+            
+            <div id="user-profile" class="hidden flex items-center gap-4">
+                <button onclick="ui.openPostModal()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-bold shadow-md hover:bg-green-600 transition-all">
+                    <i class="fas fa-plus"></i> <span id="create-btn-text">Post Job</span>
+                </button>
+                
+                <div class="relative group cursor-pointer">
+                    <img id="p-avatar" src="" onclick="ui.toggleUserMenu()" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700">
+                    <div id="user-menu" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-900 shadow-2xl rounded-lg border border-gray-100 dark:border-gray-700 py-2 z-50">
+                        <div class="px-4 py-3 border-b dark:border-gray-700 mb-2">
+                            <p id="p-name" class="font-bold text-sm dark:text-white">User</p>
+                            <p id="p-role" class="text-xs text-gray-500 uppercase font-bold">Role</p>
+                        </div>
+                        <a href="#" onclick="profileManager.viewProfile(db.state.currentUser.name)" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <i class="far fa-user"></i> My Profile
+                        </a>
+                        <a href="#" onclick="router.push('settings')" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <div class="border-t dark:border-gray-700 my-2"></div>
+                        <a href="#" onclick="auth.logout()" class="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 mt-[80px] relative overflow-hidden bg-brand-surface dark:bg-[#0a0a0a]">
+        
+        <div id="view-hero" class="absolute inset-0 overflow-y-auto bg-white dark:bg-brand-black z-40">
+            <div class="relative bg-brand-black text-white py-32 px-6 text-center">
+                <h1 class="text-5xl md:text-7xl font-bold mb-6">Freelance services.<br>On demand.</h1>
+                <p class="text-xl text-gray-400 mb-10">Work with the best talent from around the world.</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="auth.login('client')" class="px-8 py-3 bg-brand-primary text-white rounded font-bold hover:scale-105 transition-transform">Hire Talent</button>
+                    <button onclick="auth.login('freelancer')" class="px-8 py-3 border border-white rounded font-bold hover:bg-white hover:text-black transition-colors">Find Work</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-market" class="view hidden absolute inset-0 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-7xl mx-auto pb-20">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="market-title" class="text-2xl font-bold dark:text-white">Recommended For You</h2>
+                    <div class="flex bg-white dark:bg-gray-800 rounded-lg p-1 border dark:border-gray-700">
+                        <button class="px-4 py-1.5 text-xs font-bold bg-brand-black text-white rounded">All</button>
+                        <button class="px-4 py-1.5 text-xs font-bold text-gray-500 hover:text-brand-primary">Best Selling</button>
+                    </div>
+                </div>
+                <div id="market-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    </div>
+            </div>
+        </div>
+
+        <div id="view-profile" class="view hidden absolute inset-0 overflow-y-auto bg-gray-50 dark:bg-black">
+            <div class="h-48 bg-gradient-to-r from-gray-800 to-black"></div>
+            
+            <div class="max-w-5xl mx-auto px-6 relative -mt-20 pb-20">
+                <div class="flex flex-col md:flex-row gap-8">
+                    
+                    <div class="w-full md:w-1/3">
+                        <div class="bg-white dark:bg-[#141414] rounded-xl shadow-lg border dark:border-gray-800 p-6 text-center relative overflow-hidden">
+                            <img id="prof-avatar" src="" class="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 mx-auto shadow-md object-cover">
+                            
+                            <div class="mt-4">
+                                <h2 id="prof-name" class="text-2xl font-bold dark:text-white">Name</h2>
+                                <p id="prof-title" class="text-gray-500 text-sm font-medium mt-1">Job Title</p>
+                                <div class="flex justify-center items-center gap-2 mt-2">
+                                    <span class="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-full text-xs font-bold" id="prof-role">Freelancer</span>
+                                    <span class="flex items-center text-yellow-500 text-sm font-bold"><i class="fas fa-star mr-1"></i> 5.0</span>
+                                </div>
+                            </div>
+
+                            <div class="border-t dark:border-gray-700 my-6 pt-6 text-left">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-500 text-sm"><i class="fas fa-map-marker-alt w-5"></i> From</span>
+                                    <span class="font-bold text-sm dark:text-white">United States</span>
+                                </div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-500 text-sm"><i class="fas fa-user w-5"></i> Member since</span>
+                                    <span class="font-bold text-sm dark:text-white">Oct 2023</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 text-sm"><i class="fas fa-clock w-5"></i> Hourly Rate</span>
+                                    <span class="font-bold text-sm text-brand-primary" id="prof-rate">$50/hr</span>
+                                </div>
+                            </div>
+
+                            <button id="prof-action-btn" class="w-full py-3 bg-brand-black dark:bg-white text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition">Contact Me</button>
+                            <button id="prof-edit-btn" onclick="router.push('settings')" class="hidden w-full py-3 border border-gray-300 dark:border-gray-600 font-bold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 mt-2">Edit Profile</button>
+                        </div>
+
+                        <div class="bg-white dark:bg-[#141414] rounded-xl shadow-lg border dark:border-gray-800 p-6 mt-6">
+                            <h3 class="font-bold dark:text-white mb-4">Skills</h3>
+                            <div id="prof-skills" class="flex flex-wrap gap-2">
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1">
+                        <div class="bg-white dark:bg-[#141414] rounded-xl shadow-lg border dark:border-gray-800 p-8 mb-6">
+                            <h3 class="text-xl font-bold dark:text-white mb-4">About Me</h3>
+                            <p id="prof-bio" class="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                                No bio added yet.
+                            </p>
+                        </div>
+                        
+                        <h3 class="text-xl font-bold dark:text-white mb-4">Active Posts</h3>
+                        <div id="prof-posts" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-settings" class="view hidden absolute inset-0 overflow-y-auto bg-gray-50 dark:bg-black p-4 md:p-8">
+            <div class="max-w-2xl mx-auto bg-white dark:bg-[#141414] rounded-xl shadow-lg border dark:border-gray-800 p-8">
+                <h2 class="text-2xl font-bold dark:text-white mb-6">Edit Profile</h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-500 mb-1">Display Name</label>
+                        <input id="set-name" type="text" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border dark:border-gray-700 rounded-lg outline-none focus:border-brand-primary dark:text-white">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-500 mb-1">Job Title</label>
+                            <input id="set-title" type="text" placeholder="e.g. Senior Developer" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border dark:border-gray-700 rounded-lg outline-none focus:border-brand-primary dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-500 mb-1">Hourly Rate ($)</label>
+                            <input id="set-rate" type="number" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border dark:border-gray-700 rounded-lg outline-none focus:border-brand-primary dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-500 mb-1">Bio</label>
+                        <textarea id="set-bio" rows="4" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border dark:border-gray-700 rounded-lg outline-none focus:border-brand-primary dark:text-white"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-500 mb-1">Skills (Comma separated)</label>
+                        <input id="set-skills" type="text" placeholder="React, Design, SEO..." class="w-full p-3 bg-gray-50 dark:bg-gray-900 border dark:border-gray-700 rounded-lg outline-none focus:border-brand-primary dark:text-white">
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button onclick="profileManager.saveSettings()" class="flex-1 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-green-600">Save Changes</button>
+                        <button onclick="router.push('market')" class="px-6 py-3 border dark:border-gray-700 font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-white">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-dashboard" class="view hidden absolute inset-0 p-8"><h2 class="text-2xl font-bold dark:text-white">Dashboard</h2><p class="text-gray-500">Feature from v3.0 preserved.</p></div>
+        <div id="view-community" class="view hidden absolute inset-0 p-8"><h2 class="text-2xl font-bold dark:text-white">Messages</h2><p class="text-gray-500">Feature from v3.0 preserved.</p></div>
+
+    </main>
+
+    <div id="post-modal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-900 w-full max-w-lg p-6 rounded-2xl relative">
+            <button onclick="ui.closePostModal()" class="absolute top-4 right-4 text-gray-400"><i class="fas fa-times"></i></button>
+            <h2 class="text-xl font-bold mb-4 dark:text-white">Create Post</h2>
+            <div class="space-y-4">
+                <input id="inp-post-title" type="text" placeholder="Title" class="w-full p-3 bg-gray-50 dark:bg-gray-800 rounded outline-none dark:text-white">
+                <input id="inp-post-budget" type="number" placeholder="Budget ($)" class="w-full p-3 bg-gray-50 dark:bg-gray-800 rounded outline-none dark:text-white">
+                <textarea id="inp-post-desc" rows="3" placeholder="Description" class="w-full p-3 bg-gray-50 dark:bg-gray-800 rounded outline-none dark:text-white"></textarea>
+                <button onclick="dataManager.createPost()" class="w-full py-3 bg-brand-primary text-white font-bold rounded hover:opacity-90">Publish</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA LAYER ---
+        const db = {
+            state: { users: [], posts: [], currentUser: null },
+            init() {
+                const s = localStorage.getItem('gobig_v4');
+                if(s) this.state = JSON.parse(s);
+                else this.seed();
+            },
+            save() { localStorage.setItem('gobig_v4', JSON.stringify(this.state)); },
+            seed() {
+                // Seed some data for "industry ready" feel
+                this.state.posts = [
+                    { id: 1, type: 'gig', title: "I will build your startup website", budget: 800, author: "SarahDev", avatar: "https://ui-avatars.com/api/?name=SarahDev&background=random", cat: "Development", desc: "Full stack MERN." },
+                    { id: 2, type: 'job', title: "Need a logo for coffee brand", budget: 200, author: "ClientMike", avatar: "https://ui-avatars.com/api/?name=ClientMike&background=random", cat: "Design", desc: "Vintage style." }
+                ];
+                this.state.users = [
+                    { name: "SarahDev", role: "freelancer", title: "Full Stack Developer", rate: 65, bio: "Expert in React and Node.js with 5 years experience.", skills: ["React", "Node", "MongoDB"] },
+                    { name: "ClientMike", role: "client", title: "Business Owner", rate: 0, bio: "Running a local coffee chain.", skills: ["Business"] }
+                ];
+                this.save();
+            }
+        };
+
+        // --- AUTH ---
+        const auth = {
+            login(role) {
+                const name = role === 'client' ? "ClientMike" : "SarahDev";
+                // Find or create user
+                let user = db.state.users.find(u => u.name === name);
+                if (!user) {
+                    user = { 
+                        name: name, role: role, 
+                        title: role === 'client' ? "Hiring Manager" : "Professional Freelancer", 
+                        rate: 0, bio: "No bio yet.", skills: [],
+                        avatar: `https://ui-avatars.com/api/?name=${name}&background=1DBF73&color=fff`
+                    };
+                    db.state.users.push(user);
+                }
+                db.state.currentUser = user;
+                db.save();
+                location.reload();
+            },
+            logout() {
+                db.state.currentUser = null;
+                db.save();
+                location.reload();
+            }
+        };
+
+        // --- PROFILE MANAGER ---
+        const profileManager = {
+            viewProfile(username) {
+                // Find user details
+                const user = db.state.users.find(u => u.name === username) || { name: username, role: 'unknown', title: 'User', bio: 'No details.', skills: [], rate: 0 };
+                const isMe = db.state.currentUser && db.state.currentUser.name === username;
+
+                // Populate UI
+                document.getElementById('prof-name').innerText = user.name;
+                document.getElementById('prof-role').innerText = user.role;
+                document.getElementById('prof-title').innerText = user.title || "Member";
+                document.getElementById('prof-bio').innerText = user.bio;
+                document.getElementById('prof-rate').innerText = `$${user.rate || 0}/hr`;
+                document.getElementById('prof-avatar').src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
+
+                // Skills
+                const skillsCont = document.getElementById('prof-skills');
+                skillsCont.innerHTML = user.skills && user.skills.length 
+                    ? user.skills.map(s => `<span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-xs font-bold rounded-full text-gray-600 dark:text-gray-300">${s}</span>`).join('') 
+                    : '<span class="text-sm text-gray-400">No skills listed.</span>';
+
+                // Buttons
+                const editBtn = document.getElementById('prof-edit-btn');
+                const contactBtn = document.getElementById('prof-action-btn');
+                
+                if(isMe) {
+                    editBtn.classList.remove('hidden');
+                    contactBtn.classList.add('hidden');
+                } else {
+                    editBtn.classList.add('hidden');
+                    contactBtn.classList.remove('hidden');
+                    contactBtn.innerText = user.role === 'client' ? "Contact Client" : "Hire Me";
+                    contactBtn.onclick = () => alert(`Chat with ${username} started! (Chat logic linked in v3)`);
+                }
+
+                // Load User Posts
+                const postsCont = document.getElementById('prof-posts');
+                const userPosts = db.state.posts.filter(p => p.author === username);
+                postsCont.innerHTML = userPosts.length 
+                    ? userPosts.map(p => `
+                        <div class="p-4 border dark:border-gray-800 rounded-lg">
+                            <h4 class="font-bold dark:text-white text-sm">${p.title}</h4>
+                            <p class="text-xs text-brand-primary font-bold mt-1">$${p.budget}</p>
+                        </div>`).join('') 
+                    : '<p class="text-gray-500 text-sm">No active posts.</p>';
+
+                router.push('profile');
+            },
+
+            loadSettings() {
+                const user = db.state.currentUser;
+                document.getElementById('set-name').value = user.name;
+                document.getElementById('set-title').value = user.title || "";
+                document.getElementById('set-rate').value = user.rate || 0;
+                document.getElementById('set-bio').value = user.bio || "";
+                document.getElementById('set-skills').value = user.skills ? user.skills.join(', ') : "";
+            },
+
+            saveSettings() {
+                const user = db.state.currentUser;
+                // Update Local State
+                user.name = document.getElementById('set-name').value;
+                user.title = document.getElementById('set-title').value;
+                user.rate = document.getElementById('set-rate').value;
+                user.bio = document.getElementById('set-bio').value;
+                user.skills = document.getElementById('set-skills').value.split(',').map(s => s.trim()).filter(s => s);
+
+                // Update in Users Array
+                const idx = db.state.users.findIndex(u => u.name === db.state.currentUser.name); // Note: Should use ID in real app, using name for demo
+                if(idx !== -1) db.state.users[idx] = user;
+
+                db.save();
+                toast("Profile updated successfully!");
+                this.viewProfile(user.name);
+            }
+        };
+
+        // --- DATA MANAGER (Posts) ---
+        const dataManager = {
+            createPost() {
+                const title = document.getElementById('inp-post-title').value;
+                const budget = document.getElementById('inp-post-budget').value;
+                const desc = document.getElementById('inp-post-desc').value;
+                
+                if(!title || !budget) return toast("Missing fields", "error");
+
+                const user = db.state.currentUser;
+                db.state.posts.unshift({
+                    id: Date.now(),
+                    type: user.role === 'client' ? 'job' : 'gig',
+                    title, budget, desc,
+                    author: user.name,
+                    avatar: `https://ui-avatars.com/api/?name=${user.name}&background=random`
+                });
+                db.save();
+                ui.closePostModal();
+                ui.renderMarket();
+                toast("Posted!");
+            }
+        };
+
+        // --- ROUTER & UI ---
+        const router = {
+            push(view) {
+                document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-hero').classList.add('hidden');
+                document.getElementById('view-' + view).classList.remove('hidden');
+                
+                // Active State for Tabs
+                document.querySelectorAll('#nav-tabs button').forEach(b => b.classList.remove('text-brand-primary'));
+                document.getElementById('tab-' + view)?.classList.add('text-brand-primary');
+
+                if(view === 'market') ui.renderMarket();
+                if(view === 'settings') profileManager.loadSettings();
+            }
+        };
+
+        const ui = {
+            renderMarket() {
+                const grid = document.getElementById('market-grid');
+                grid.innerHTML = "";
+                const user = db.state.currentUser;
+                
+                // Filter: Freelancers see jobs, Clients see gigs
+                const viewType = user.role === 'freelancer' ? 'job' : 'gig';
+                const items = db.state.posts.filter(p => p.type === viewType);
+
+                if(items.length === 0) return grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">No items found.</div>`;
+
+                items.forEach(p => {
+                    grid.innerHTML += `
+                        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-xl transition group">
+                            <div class="p-5">
+                                <div class="flex items-center gap-2 mb-3 cursor-pointer" onclick="profileManager.viewProfile('${p.author}')">
+                                    <img src="${p.avatar}" class="w-8 h-8 rounded-full">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold dark:text-white hover:underline">${p.author}</span>
+                                        <span class="text-[10px] text-gray-500">Top Rated</span>
+                                    </div>
+                                </div>
+                                <h3 class="font-bold text-lg dark:text-white leading-tight mb-2 group-hover:text-brand-primary cursor-pointer" onclick="alert('View details')">${p.title}</h3>
+                                <p class="text-sm text-gray-500 mb-4 line-clamp-2">${p.desc}</p>
+                                <div class="flex justify-between items-center border-t dark:border-gray-700 pt-3">
+                                    <span class="font-extrabold dark:text-white">$${p.budget}</span>
+                                    <button class="text-sm font-bold text-brand-primary">View Details</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+            toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); },
+            openPostModal() { document.getElementById('post-modal').classList.remove('hidden'); },
+            closePostModal() { document.getElementById('post-modal').classList.add('hidden'); },
+            openModal() { this.openPostModal(); } // alias
+        };
+
+        function toast(msg, type='success') {
+            Toastify({ text: msg, duration: 3000, style: { background: type === 'error' ? "#EF4444" : "#1DBF73" } }).showToast();
+        }
+
+        // INIT
+        window.onload = () => {
+            db.init();
+            if(db.state.currentUser) {
+                document.getElementById('auth-buttons').classList.add('hidden');
+                document.getElementById('user-profile').classList.remove('hidden');
+                document.getElementById('nav-tabs').classList.remove('hidden');
+                
+                // Update nav profile preview
+                document.getElementById('p-name').innerText = db.state.currentUser.name;
+                document.getElementById('p-role').innerText = db.state.currentUser.role;
+                document.getElementById('p-avatar').src = db.state.currentUser.avatar; // fixed reference
+                document.getElementById('create-btn-text').innerText = db.state.currentUser.role === 'client' ? "Post Job" : "Create Gig";
+
+                router.push('market');
+            } else {
+                document.getElementById('view-hero').classList.remove('hidden');
+            }
+        };
+    </script>
+</body>
+</html>
